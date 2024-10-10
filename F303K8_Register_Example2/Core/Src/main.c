@@ -7,7 +7,6 @@ void TIM6_Init(void);
 void GPIO_Init(void);
 
 void delay_ms(unsigned long ms);
-void delay_us(unsigned long us);
 
 int main(void)
 {
@@ -53,8 +52,8 @@ void TIM6_Init(void)
 	/*TIM6にクロックを供給*/
 	RCC -> APB1ENR |= (1 << 4);
 
-	TIM6 -> PSC =  (64000000 / 1000) - 1;
-	TIM6 -> CNT = 0;
+	/*分周比を設定し、TIM6の周波数を1KHzに*/
+	TIM6 -> PSC = (64000000 / 1000) - 1;
 
 	/*TIM6を無効に*/
 	TIM6 -> CR1 &= (~(1 << 0));
@@ -70,11 +69,13 @@ void GPIO_Init(void)
 
 void delay_ms(unsigned long ms)
 {
-	TIM6 -> SR &= (~(1 << 0));
-	TIM6 -> ARR = ms - 1;
-	TIM6 -> CR1 |= (1 << 0);
+	TIM6 -> SR &= (~(1 << 0));				//更新フラグをクリア
+	TIM6 -> CNT = 0;						//カウンタを0にリセット
+	TIM6 -> ARR = ms - 1;					//遅延時間をセット
+	TIM6 -> CR1 |= (1 << 0);				//TIM6を有効に
 
+	/*ARRの値に到達するまで待機*/
 	while (!(TIM6 -> SR & (1 << 0)));
 
-	TIM6 -> CR1 &= (~(1 << 0));
+	TIM6 -> CR1 &= (~(1 << 0));				//TIM6を無効に
 }

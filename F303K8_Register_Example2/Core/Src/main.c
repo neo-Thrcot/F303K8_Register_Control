@@ -6,7 +6,7 @@ void TIM6_Init(void);
 
 void GPIO_Init(void);
 
-void delay_ms(unsigned long ms);
+void delay_ms(uint16_t ms);
 
 int main(void)
 {
@@ -67,7 +67,7 @@ void GPIO_Init(void)
 	GPIOA -> MODER &= (~(1 << 1));
 }
 
-void delay_ms(unsigned long ms)
+void delay_ms(uint16_t ms)
 {
 	TIM6 -> SR &= (~(1 << 0));				//更新フラグをクリア
 	TIM6 -> CNT = 0;						//カウンタを0にリセット

@@ -1,6 +1,6 @@
 #include "stm32f3xx.h"
 
-void RCC_Init(void);
+void System_Clock_Init(void);
 
 void TIM6_Init(void);
 
@@ -11,7 +11,7 @@ void delay_ms(uint16_t ms);
 int main(void)
 {
 	/*各ペリフェラルの初期化*/
-	RCC_Init();
+	System_Clock_Init();
 	TIM6_Init();
 	GPIO_Init();
 
@@ -28,7 +28,7 @@ int main(void)
 	return 0;
 }
 
-void RCC_Init(void)
+void System_Clock_Init(void)
 {
 	/*PLLの設定*/
 	RCC -> CFGR &= (~(1 << 16));		//PLLのクロック源をHSIに

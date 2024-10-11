@@ -1,9 +1,7 @@
 #include "stm32f3xx.h"
 
 void System_Clock_Init(void);
-
 void TIM6_Init(void);
-
 void GPIO_Init(void);
 
 void delay_ms(uint16_t ms);

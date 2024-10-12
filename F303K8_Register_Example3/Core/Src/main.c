@@ -64,9 +64,11 @@ void USART2_Init(unsigned int BaudRate)
 	/*USART2にクロックを供給*/
 	RCC -> APB1ENR |= (1 << 17);
 
-	/*USART2の設定*/
+	/*ボーレートの設定*/
 	USART2 -> CR1 &= (~(1 << 15));			//オーバーサンプリングを16倍に
 	USART2 -> BRR = 32000000 / BaudRate;	//ボーレートを115200に設定
+
+	/*USART2を有効にする*/
 	USART2 -> CR1 |= (1 << 3);				//TXを有効に
 	USART2 -> CR1 |= (1 << 2);				//RXを有効に
 	USART2 -> CR1 |= (1 << 0);				//USART2を有効に

@@ -107,25 +107,32 @@ void delay_ms(uint16_t ms)
 
 void USART2_Transmit(uint8_t *transmit_buf, unsigned int data_size)
 {
+	/*要求されたデータの数だけループする*/
 	for (int i = 0; i < data_size; i++) {
+		/*送信データレジスタがエンプティになるまで待機*/
 		while (!(USART2 -> ISR & (1 << 7)));
 
+		/*データ送信レジスタにデータを入力*/
 		USART2 -> TDR = transmit_buf[i];
 
+		/*データが送信されるまで待機*/
 		while (!(USART2 -> ISR & (1 << 6)));
 	}
 }
 
 uint16_t USART2_Receive(uint8_t *receive_buf, unsigned int data_size)
 {
-	uint16_t receive_data_size = 0;
+	uint16_t receive_data_size = 0;				//データ受信の数をカウント
 
+	/*要求されたデータの数だけループする*/
 	for (int i = 0; i < data_size; i++) {
 		if (USART2 -> ISR & (1 << 5)) {
-			receive_buf[i] = USART2 -> RDR;
+			/*データを受信した場合に実行*/
+			receive_buf[i] = USART2 -> RDR;		//配列にデータを格納
 
 			receive_data_size++;
 		} else {
+			/*データを受信していなければ0を代入*/
 			receive_buf[i] = 0x00;
 		}
 	}

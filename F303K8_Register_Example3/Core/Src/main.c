@@ -8,6 +8,7 @@ void GPIO_Init(void);
 void delay_ms(uint16_t ms);
 
 void USART2_Transmit(uint8_t *transmit_buf, unsigned int data_size);
+uint16_t USART2_Receive(uint8_t *receive_buf, unsigned int data_size);
 
 int main(void)
 {
@@ -19,10 +20,11 @@ int main(void)
 
 	while (1)
 	{
-		uint8_t message_buf[20] = "Hello STM32!\n\r";
+		uint8_t message_buf[20] = {0};
 
-		USART2_Transmit(message_buf, sizeof(message_buf));
-		delay_ms(1000);
+		if (USART2_Receive(message_buf, 1)) {
+			USART2_Transmit(message_buf, 1);
+		}
 	}
 
 	return 0;
@@ -112,4 +114,21 @@ void USART2_Transmit(uint8_t *transmit_buf, unsigned int data_size)
 
 		while (!(USART2 -> ISR & (1 << 6)));
 	}
+}
+
+uint16_t USART2_Receive(uint8_t *receive_buf, unsigned int data_size)
+{
+	uint16_t receive_data_size = 0;
+
+	for (int i = 0; i < data_size; i++) {
+		if (USART2 -> ISR & (1 << 5)) {
+			receive_buf[i] = USART2 -> RDR;
+
+			receive_data_size++;
+		} else {
+			receive_buf[i] = 0x00;
+		}
+	}
+
+	return receive_data_size;
 }

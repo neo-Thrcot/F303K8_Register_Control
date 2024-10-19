@@ -1,4 +1,10 @@
 #include "stm32f3xx.h"
+#include <stdio.h>
+
+enum {
+	USART_OK,
+	USART_NG
+};
 
 void System_Clock_Init(void);
 void TIM6_Init(void);
@@ -8,7 +14,7 @@ void GPIO_Init(void);
 void delay_ms(uint16_t ms);
 
 void USART2_Transmit(uint8_t *transmit_buf, unsigned int data_size);
-uint16_t USART2_Receive(uint8_t *receive_buf, unsigned int data_size);
+uint8_t USART2_Receive(uint8_t *receive_buf, unsigned int data_size, unsigned int timeout_ms);
 
 int main(void)
 {
@@ -18,12 +24,17 @@ int main(void)
 	USART2_Init(115200);
 	GPIO_Init();
 
-	uint8_t message[50] = "Hello STM32!\n\r";
-
 	while (1)
 	{
-		USART2_Transmit(message, sizeof(message));
-		delay_ms(1000);
+		uint8_t transmit_buf1[50] = "Received 3 characters\n\r";
+		uint8_t transmit_buf2[50] = "Can't received\n\r";
+		uint8_t receive[10];
+
+		if (USART2_Receive(receive, 3, 1000) == USART_OK) {
+			USART2_Transmit(transmit_buf1, sizeof(transmit_buf1));
+		} else {
+			USART2_Transmit(transmit_buf2, sizeof(transmit_buf2));
+		}
 	}
 
 	return 0;
@@ -77,10 +88,12 @@ void USART2_Init(unsigned int BaudRate)
 
 void GPIO_Init(void)
 {
-	/*GPIOAにクロックを供給*/
+	/*GPIOA、Bにクロックを供給*/
 	RCC -> AHBENR |= (1 << 17);
+	RCC -> AHBENR |= (1 << 18);
 
-	/*PA2、PA15をオルタネートモードに*/
+	/*PortA*/
+	/*GPIOのモード設定*/
 	GPIOA -> MODER &= (~(1 << 4));
 	GPIOA -> MODER |= (1 << 5);
 	GPIOA -> MODER &= (~(1 << 30));
@@ -89,6 +102,11 @@ void GPIO_Init(void)
 	/*オルタネート機能を設定*/
 	GPIOA -> AFR[0] |= (0b0111 << 8);
 	GPIOA -> AFR[1] |= (0b0111 << 28);
+
+	/*PortB*/
+	/*GPIOのモード設定*/
+	GPIOB -> MODER |= (1 << 0);
+	GPIOB -> MODER &= (~(1 << 1));
 }
 
 void delay_ms(uint16_t ms)
@@ -119,22 +137,32 @@ void USART2_Transmit(uint8_t *transmit_buf, unsigned int data_size)
 	}
 }
 
-uint16_t USART2_Receive(uint8_t *receive_buf, unsigned int data_size)
+uint8_t USART2_Receive(uint8_t *receive_buf, unsigned int data_size, unsigned int timeout_ms)
 {
-	uint16_t receive_data_size = 0;				//データ受信の数をカウント
+	uint16_t receive_data_size = 0;		//データ受信の数をカウント
+
+	/*delay_ms関数と同様に*/
+	TIM6 -> SR &= (~(1 << 0));
+	TIM6 -> CNT = 0;
+	TIM6 -> ARR = timeout_ms - 1;
+	TIM6 -> CR1 |= (1 << 0);
 
 	/*要求されたデータの数だけループする*/
 	for (int i = 0; i < data_size; i++) {
-		if (USART2 -> ISR & (1 << 5)) {
-			/*データを受信した場合に実行*/
-			receive_buf[i] = USART2 -> RDR;		//配列にデータを格納
-
-			receive_data_size++;
-		} else {
-			/*データを受信していなければ0を代入*/
-			receive_buf[i] = 0x00;
+		/*データ受信するまで待機*/
+		while (!(USART2 -> ISR & (1 << 5))) {
+			if (TIM6 -> SR & (1 << 0)) {
+				/*関数から抜け出す*/
+				TIM6 -> CR1 &= (~(1 << 0));
+				return USART_NG;
+			}
 		}
+
+		receive_buf[i] = USART2 -> RDR;
+		receive_data_size++;
 	}
 
-	return receive_data_size;
+	TIM6 -> CR1 &= (~(1 << 0));
+
+	return USART_OK;
 }

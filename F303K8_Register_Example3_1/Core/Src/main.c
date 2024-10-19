@@ -18,12 +18,13 @@ int main(void)
 	USART2_Init(115200);
 	GPIO_Init();
 
-	uint8_t message[50] = "Hello STM32!\n\r";
-
 	while (1)
 	{
-		USART2_Transmit(message, sizeof(message));
-		delay_ms(1000);
+		uint8_t message_buf[20];
+
+		if (USART2_Receive(message_buf, 1)) {
+			USART2_Transmit(message_buf, 1);
+		}
 	}
 
 	return 0;

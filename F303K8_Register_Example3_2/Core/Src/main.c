@@ -139,8 +139,6 @@ void USART2_Transmit(uint8_t *transmit_buf, unsigned int data_size)
 
 uint8_t USART2_Receive(uint8_t *receive_buf, unsigned int data_size, unsigned int timeout_ms)
 {
-	uint16_t receive_data_size = 0;		//データ受信の数をカウント
-
 	/*delay_ms関数と同様に*/
 	TIM6 -> SR &= (~(1 << 0));
 	TIM6 -> CNT = 0;
@@ -159,7 +157,6 @@ uint8_t USART2_Receive(uint8_t *receive_buf, unsigned int data_size, unsigned in
 		}
 
 		receive_buf[i] = USART2 -> RDR;
-		receive_data_size++;
 	}
 
 	TIM6 -> CR1 &= (~(1 << 0));
